@@ -104,3 +104,4 @@ Future<void> getData() async {
     );
   }
 }
+// flutter run -d chrome --web-browser-flag "--disable-web-security"

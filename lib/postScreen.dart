@@ -25,11 +25,13 @@ class PostScreen extends StatefulWidget {
 }
 
 class _PostScreenState extends State<PostScreen> {
-
+  String _errorMessage = '';
   Map<String, dynamic> _data = {};
+
+
   Future<void> updatePost(int id, String title, int user) async {
   final response = await http.put(
-    Uri.parse('http://127.0.0.1:8000/post/$id/'),
+    Uri.parse('http://127.0.0.1:8000/post/$id'),
     headers: <String, String>{
       'Content-Type': 'application/json; charset=UTF-8',
     },
@@ -38,19 +40,50 @@ class _PostScreenState extends State<PostScreen> {
       'user': user,
     }),
   );
+  _errorMessage = '';
+  if( response.statusCode == 404){
+    setState(() {
+      _errorMessage = 'Not found';
+    });
+  }else if (response.statusCode == 500){
+    _errorMessage = 'Internal server error';
+  }else if (response.statusCode == 400){
+    _errorMessage = 'Bad request';
+  }else{
+    _errorMessage = 'Something broken';
+  }
+
 }
 
   Future<void> getData(int id) async {
-    
+    _errorMessage = '';
     final response = await http.get(Uri.parse('http://127.0.0.1:8000/post/$id'));
     if (response.statusCode == 200) {
       final jsonData = json.decode(response.body);
       setState(() {
         _data = Map<String, dynamic>.from(jsonData);
       });
+    }else if( response.statusCode == 404){
+      setState(() {
+        setState(() {
+          _errorMessage = 'Not found';
+            });
+      });
+    }else if (response.statusCode == 500){
+      setState(() {
+          _errorMessage = 'Internal server error';
+            });
+    }else if (response.statusCode == 400){
+      setState(() {
+          _errorMessage = 'Bad request';
+            });
+    }else{
+      setState(() {
+          _errorMessage = 'Something broke';
+            });
     }
   }
-  Future<void> deletePost(int id) async {
+  Future<String> deletePost(int id) async {
     
     final response = await http.delete(Uri.parse('http://127.0.0.1:8000/post/$id'),headers: <String, String>{
       'Content-Type': 'application/json; charset=UTF-8',
@@ -59,12 +92,34 @@ class _PostScreenState extends State<PostScreen> {
       'id': id,
 
     }));
-    if (response.statusCode == 200) {
+    if (response.statusCode == 204) {
       final jsonData = json.decode(response.body);
       setState(() {
         _data = Map<String, dynamic>.from(jsonData);
       });
+      return '';
+    }else if( response.statusCode == 404){
+      setState(() {
+          _errorMessage = 'Not found';
+      });
+      return 'NotFound';
+    }else if (response.statusCode == 500){
+      setState(() {
+          _errorMessage = 'Internal server error';
+            });
+            return 'Internal server error';
+    }else if (response.statusCode == 400){
+      setState(() {
+          _errorMessage = 'Bad request';
+            });
+            return 'Bad request';
+    }else{
+      setState(() {
+          _errorMessage = 'Something broke';
+            });
+            return 'Something broke';
     }
+
   }
   bool isEditable = false;
 
@@ -118,11 +173,19 @@ class _PostScreenState extends State<PostScreen> {
                 icon: const Icon(Icons.delete),
                 iconSize: 35.0,
                 onPressed: () {
-                  deletePost(_data["id"]);
+                  String er = deletePost(_data["id"]) as String;
+                  if (er == ''){
                   Navigator.pop(context);
                   Navigator.push(context, MaterialPageRoute<void>(builder: (BuildContext context) => const HomeScreen()));
+                  }
                 },
               ),
+            ),
+            Text(
+              _errorMessage,
+              style: const TextStyle(
+                color: Colors.red
+                ),
             ),
           ],
         ),

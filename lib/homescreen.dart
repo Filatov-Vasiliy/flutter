@@ -48,7 +48,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ? ListView.builder(
           itemCount: _data.length,
           itemBuilder: (context, index) {
-            getData();
+            //getData();
             final item = _data[index];
             return GestureDetector(
               child: Dismissible(
